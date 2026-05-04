@@ -1,18 +1,11 @@
-﻿using FPacker.Builders;
+using System.Windows.Forms;
 
-public static class Program {
+namespace FPacker;
 
-    public static void Main(string[] arguments) {
-        arguments = new[] { @"C:\Users\developer\Desktop\TestMod" };
-        
-        var pbo = new PboBuilder("TestMod").WithEntryBuilder(e => {
-            e.WithRelocatedConfigs();
-            e.WithRelocatedScripts();
-            e.WithConfigProtection();
-            e.WithoutBinarizedConfigs();
-            e.WithJunkFiles();
-            e.FromDirectory(arguments[0]);
-        }).Build();
-        File.WriteAllBytes(@"C:\Users\developer\Desktop\OmegaManager\servers\0\@TestMod\Addons\TestMod.pbo", pbo.ToArray());
+internal static class Program {
+    [STAThread]
+    private static void Main() {
+        ApplicationConfiguration.Initialize();
+        Application.Run(new MainForm());
     }
 }

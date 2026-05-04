@@ -23,6 +23,7 @@ public class PboEntryBuilder : IDisposable {
     private bool _directoryHasBeenMapped;
     private bool _disposed;
     private List<DayZScripts> _scripts = new();
+    private bool IsPlainBuild => !_relocateConfigs && !_relocateScripts && !_cfgProtection && !_junkFiles && !_binarizeCfgs;
 
     public PboEntryBuilder(string pboPrefix) =>_pboPrefix = pboPrefix;
 
@@ -66,6 +67,13 @@ public class PboEntryBuilder : IDisposable {
     
     public PboEntryBuilder FromDirectory(string pboRoot) {
         if (_directoryHasBeenMapped) throw new Exception("PboEntryBuilder::FromDirectory can only be called once!");
+
+        if (IsPlainBuild) {
+            AddPlainDirectoryEntries(pboRoot);
+            _directoryHasBeenMapped = true;
+            return this;
+        }
+
         var readFiles = new List<string>();
         foreach (var file in new DirectoryInfo(pboRoot).EnumerateFiles(@"config.*", SearchOption.AllDirectories)) {
             if(file.Extension != ".bin" && file.Extension != ".cpp") continue;
@@ -113,6 +121,24 @@ public class PboEntryBuilder : IDisposable {
         return this;
     }
 
+    private void AddPlainDirectoryEntries(string pboRoot) {
+        foreach (var file in new DirectoryInfo(pboRoot).EnumerateFiles("*", SearchOption.AllDirectories)) {
+            var fileType = file.Extension.ToLowerInvariant() switch {
+                ".p3d" => DayZFileType.Model,
+                ".paa" => DayZFileType.Texture,
+                ".rvmat" => DayZFileType.RVMat,
+                _ => DayZFileType.Misc
+            };
+
+            WithEntry(
+                new PBOEntry(
+                    Path.GetRelativePath(pboRoot, file.FullName),
+                    new MemoryStream(File.ReadAllBytes(file.FullName)),
+                    (int)PackingTypeFlags.Uncompressed),
+                fileType);
+        }
+    }
+
     private string CfgProtection_RecursiveSweep(RapClassDeclaration classDeclaration, ref List<PBOEntry> entries, string parentFolder) {
         var retValue = "#include \"\0\"";
         var fileName = ObfuscationTools.GenerateSimpleObfuscatedPath(out var fName, parentFolder);
@@ -158,7 +184,11 @@ public class PboEntryBuilder : IDisposable {
         
         
         
-        foreach (var entry in _entries[DayZFileType.ParamFile]) {
+        if (!_entries.TryGetValue(DayZFileType.ParamFile, out var paramFileEntries)) {
+            return entries;
+        }
+
+        foreach (var entry in paramFileEntries) {
             entry.EntryName = entry.EntryName.Replace("config.bin", "config.cpp");
             if (_relocateConfigs) entry.EntryName = ObfuscationTools.GenerateObfuscatedPath() + "\\config.cpp";
             ParamFile paramFile = ParamFile.OpenStream(new MemoryStream(entry.EntryData.ToArray()));
