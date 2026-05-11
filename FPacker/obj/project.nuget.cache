@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "dgSpecHash": "QGURxMZm0Rc=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Admin\\Desktop\\PBO Builder\\FPacker\\FPacker.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Admin\\.nuget\\packages\\antlr4.runtime.standard\\4.10.1\\antlr4.runtime.standard.4.10.1.nupkg.sha512",
+    "C:\\Users\\Admin\\.nuget\\packages\\ardalis.result\\4.1.0\\ardalis.result.4.1.0.nupkg.sha512",
+    "C:\\Users\\Admin\\.nuget\\packages\\dzconfigtools.core\\1.1.1\\dzconfigtools.core.1.1.1.nupkg.sha512",
+    "C:\\Users\\Admin\\.nuget\\packages\\microsoft.net.illink.tasks\\8.0.26\\microsoft.net.illink.tasks.8.0.26.nupkg.sha512",
+    "C:\\Users\\Admin\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\8.0.26\\microsoft.netcore.app.runtime.win-x64.8.0.26.nupkg.sha512",
+    "C:\\Users\\Admin\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\8.0.26\\microsoft.windowsdesktop.app.runtime.win-x64.8.0.26.nupkg.sha512",
+    "C:\\Users\\Admin\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\8.0.26\\microsoft.aspnetcore.app.runtime.win-x64.8.0.26.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,0 +1,7 @@
+C:\Users\Admin\Desktop\PBO Builder\publish\SimplePBO-tool.pdb
+C:\Users\Admin\Desktop\PBO Builder\publish\D3DCompiler_47_cor3.dll
+C:\Users\Admin\Desktop\PBO Builder\publish\PenImc_cor3.dll
+C:\Users\Admin\Desktop\PBO Builder\publish\PresentationNative_cor3.dll
+C:\Users\Admin\Desktop\PBO Builder\publish\vcruntime140_cor3.dll
+C:\Users\Admin\Desktop\PBO Builder\publish\wpfgfx_cor3.dll
+C:\Users\Admin\Desktop\PBO Builder\publish\SimplePBO-tool.exe

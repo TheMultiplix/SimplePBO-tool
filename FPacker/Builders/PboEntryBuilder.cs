@@ -64,6 +64,18 @@ public class PboEntryBuilder : IDisposable {
         _relocateScripts = true;
         return this;
     }
+
+    private static bool IsScriptFile(string extension) =>
+        extension.Equals(".c", StringComparison.OrdinalIgnoreCase) ||
+        extension.Equals(".h", StringComparison.OrdinalIgnoreCase);
+
+    private static DayZFileType GetFileType(string extension) =>
+        extension.ToLowerInvariant() switch {
+            ".p3d" => DayZFileType.Model,
+            ".paa" => DayZFileType.Texture,
+            ".rvmat" => DayZFileType.RVMat,
+            _ => DayZFileType.Misc
+        };
     
     public PboEntryBuilder FromDirectory(string pboRoot) {
         if (_directoryHasBeenMapped) throw new Exception("PboEntryBuilder::FromDirectory can only be called once!");
@@ -101,19 +113,20 @@ public class PboEntryBuilder : IDisposable {
             readFiles.Add(file.FullName.ToLower());
         }
 
+        var relocatedScriptEntries = _scripts
+            .SelectMany(scriptContext => scriptContext.GetScriptEntries())
+            .Select(entry => entry.EntryName)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         foreach (var file in new DirectoryInfo(pboRoot).EnumerateFiles("*", SearchOption.AllDirectories)) {
             if (readFiles.Contains(file.FullName.ToLower())) continue;
-            if (file.Extension.ToLower() == ".h" || file.Extension.ToLower() == ".c") continue;
-            var scriptType = file.Extension switch {
-                ".p3d" => DayZFileType.Model,
-                ".paa" => DayZFileType.Texture,
-                ".rvmat" => DayZFileType.RVMat,
-                _ => DayZFileType.Misc
-            };
+            var relativePath = Path.GetRelativePath(pboRoot, file.FullName);
+            if (_relocateScripts && IsScriptFile(file.Extension) && relocatedScriptEntries.Contains(relativePath)) continue;
+
             WithEntry(
-                new PBOEntry(Path.GetRelativePath(pboRoot, file.FullName),
+                new PBOEntry(relativePath,
                     new MemoryStream(File.ReadAllBytes(file.FullName)),
-                    (int)PackingTypeFlags.Compressed), scriptType);
+                    (int)PackingTypeFlags.Compressed), GetFileType(file.Extension));
 
             readFiles.Add(file.FullName.ToLower());
         }
@@ -123,19 +136,12 @@ public class PboEntryBuilder : IDisposable {
 
     private void AddPlainDirectoryEntries(string pboRoot) {
         foreach (var file in new DirectoryInfo(pboRoot).EnumerateFiles("*", SearchOption.AllDirectories)) {
-            var fileType = file.Extension.ToLowerInvariant() switch {
-                ".p3d" => DayZFileType.Model,
-                ".paa" => DayZFileType.Texture,
-                ".rvmat" => DayZFileType.RVMat,
-                _ => DayZFileType.Misc
-            };
-
             WithEntry(
                 new PBOEntry(
                     Path.GetRelativePath(pboRoot, file.FullName),
                     new MemoryStream(File.ReadAllBytes(file.FullName)),
                     (int)PackingTypeFlags.Uncompressed),
-                fileType);
+                GetFileType(file.Extension));
         }
     }
 
@@ -169,9 +175,9 @@ public class PboEntryBuilder : IDisposable {
     public IEnumerable<PBOEntry> Build() {
         var entries = new List<PBOEntry>();
 
-        if(_entries.ContainsKey(DayZFileType.Misc)) entries.AddRange(_entries[DayZFileType.Misc]); 
-        if(_entries.ContainsKey(DayZFileType.Model)) entries.AddRange(_entries[DayZFileType.Model]);
-        if(_entries.ContainsKey(DayZFileType.Texture)) entries.AddRange(_entries[DayZFileType.Texture]);
+        foreach (var fileType in _entries.Keys.Where(fileType => fileType != DayZFileType.ParamFile)) {
+            entries.AddRange(_entries[fileType]);
+        }
 
         foreach (var scriptCtx in _scripts) {
             if(_relocateScripts) scriptCtx.ObfuscateScriptNames();
@@ -179,7 +185,7 @@ public class PboEntryBuilder : IDisposable {
             _entries[DayZFileType.ParamFile].AddRange(scriptCtx.GenerateConfigs(_pboPrefix).Select(s =>
                 new PBOEntry(ObfuscationTools.GenerateObfuscatedPath() + "\\config.cpp",
                     s.WriteToStream(true), (int)PackingTypeFlags.Uncompressed)));
-            entries.AddRange(scriptCtx.GetScriptEntries());
+            if (_relocateScripts) entries.AddRange(scriptCtx.GetScriptEntries());
         }
         
         
